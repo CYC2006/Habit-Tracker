@@ -1,13 +1,6 @@
 import calendar
 from datetime import date
 
-import matplotlib
-matplotlib.use("QtAgg")
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.figure import Figure
-from matplotlib.patches import Patch
-
 import qtawesome as qta
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtGui import QBrush, QColor, QFont
@@ -20,15 +13,6 @@ from PyQt6.QtWidgets import (
 from habit_tracker import db, styles
 from habit_tracker.icon_utils import icon_for
 
-
-class _ScrollableCanvas(FigureCanvas):
-    """FigureCanvas that forwards wheel events to the parent scroll area."""
-    def wheelEvent(self, event):
-        # Pass the event up so the QScrollArea can scroll
-        if self.parent() is not None:
-            self.parent().wheelEvent(event)
-        else:
-            super().wheelEvent(event)
 
 _BAR_H  = 15   # Rate bar height
 _BAR_R  = 7    # Rate bar border-radius
@@ -62,6 +46,7 @@ class MonthView(QWidget):
         super().__init__()
         self._year  = date.today().year
         self._month = date.today().month
+        self._mpl_ready = False
         self._setup_ui()
 
     # ── UI skeleton ────────────────────────────────────────────────────────────
@@ -95,15 +80,11 @@ class MonthView(QWidget):
         # ② Daily Habit Completion bar chart — wrapped in a panel container
         self._daily_frame = QFrame()
         self._daily_frame.setObjectName("panel")
-        _dfl = QVBoxLayout(self._daily_frame)
-        _dfl.setContentsMargins(12, 12, 12, 12)
-        _dfl.setSpacing(0)
-        self._daily_fig    = Figure()
-        self._daily_canvas = _ScrollableCanvas(self._daily_fig)
-        self._daily_canvas.setStyleSheet("background-color: transparent; border: none;")
-        self._daily_canvas.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self._daily_canvas.setFixedHeight(230)
-        _dfl.addWidget(self._daily_canvas)
+        self._daily_frame_layout = QVBoxLayout(self._daily_frame)
+        self._daily_frame_layout.setContentsMargins(12, 12, 12, 12)
+        self._daily_frame_layout.setSpacing(0)
+        self._daily_fig    = None
+        self._daily_canvas = None
         cv.addWidget(self._daily_frame)
         cv.addSpacing(28)
 
@@ -186,6 +167,28 @@ class MonthView(QWidget):
         scroll.setWidget(content)
         root.addWidget(scroll, 1)
 
+    def _init_mpl(self):
+        """Lazily import matplotlib and build the chart canvas on first use."""
+        import matplotlib
+        matplotlib.use("QtAgg")
+        from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
+        from matplotlib.figure import Figure
+
+        class _ScrollableCanvas(FigureCanvas):
+            def wheelEvent(self, event):
+                if self.parent() is not None:
+                    self.parent().wheelEvent(event)
+                else:
+                    super().wheelEvent(event)
+
+        self._daily_fig    = Figure()
+        self._daily_canvas = _ScrollableCanvas(self._daily_fig)
+        self._daily_canvas.setStyleSheet("background-color: transparent; border: none;")
+        self._daily_canvas.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self._daily_canvas.setFixedHeight(230)
+        self._daily_frame_layout.addWidget(self._daily_canvas)
+        self._mpl_ready = True
+
     def _mk_header(self) -> QWidget:
         w = QWidget()
         h = QHBoxLayout(w)
@@ -248,6 +251,7 @@ class MonthView(QWidget):
         days_arr = list(range(1, days + 1))
 
         # ── Update matplotlib theme colours ────────────────────────────────────
+        import matplotlib.pyplot as plt
         plt.rcParams.update({
             "text.color":        styles.TEXT,
             "axes.labelcolor":   styles.TEXT,
@@ -454,6 +458,7 @@ class MonthView(QWidget):
         ax.set_yticks([-10, -5, 0, 5, 10])
         ax.set_ylim(-11, 11)
 
+        from matplotlib.patches import Patch
         legend_patches = [
             Patch(facecolor=styles.ACCENT, label="Habits done"),
             Patch(facecolor=styles.RED, alpha=0.65, label="Games"),
@@ -548,4 +553,6 @@ class MonthView(QWidget):
         self._load()
 
     def refresh(self):
+        if not self._mpl_ready:
+            self._init_mpl()
         self._load()
