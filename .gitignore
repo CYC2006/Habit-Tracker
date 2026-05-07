@@ -19,7 +19,7 @@ venv/
 # Database (personal data — exclude from repo)
 habits.db
 
-# Icon source (keep icon.icns, skip raw iconset)
+# Icon source (keep assets/icon.icns, skip raw iconset)
 *.iconset/
 app_icon.png
 

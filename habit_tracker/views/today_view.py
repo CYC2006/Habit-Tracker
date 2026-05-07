@@ -11,9 +11,8 @@ from PyQt6.QtWidgets import (
     QScrollArea, QSizePolicy, QVBoxLayout, QWidget,
 )
 
-import db
-import styles
-from icon_utils import icon_for as _icon_for
+from habit_tracker import db, styles
+from habit_tracker.icon_utils import icon_for as _icon_for
 
 
 # ── Habit card ─────────────────────────────────────────────────────────────────

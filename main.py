@@ -8,11 +8,10 @@ from PyQt6.QtWidgets import (
     QMainWindow, QStackedWidget, QToolButton, QVBoxLayout, QWidget,
 )
 
-import db
-import styles
-from views.month_view import MonthView
-from views.settings_view import SettingsView
-from views.today_view import TodayView
+from habit_tracker import db, styles
+from habit_tracker.views.month_view import MonthView
+from habit_tracker.views.settings_view import SettingsView
+from habit_tracker.views.today_view import TodayView
 
 _NAV_ITEMS = [
     ("fa5s.calendar-day", "Today"),

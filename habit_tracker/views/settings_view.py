@@ -9,9 +9,8 @@ from PyQt6.QtWidgets import (
     QPushButton, QScrollArea, QVBoxLayout, QWidget,
 )
 
-import db
-import styles
-from icon_utils import CURATED_ICONS, icon_for
+from habit_tracker import db, styles
+from habit_tracker.icon_utils import CURATED_ICONS, icon_for
 
 N_HABITS = 10
 

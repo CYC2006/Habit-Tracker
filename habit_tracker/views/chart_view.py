@@ -20,9 +20,8 @@ from PyQt6.QtWidgets import (
     QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget,
 )
 
-import db
-import styles
-from icon_utils import icon_for as _icon_for
+from habit_tracker import db, styles
+from habit_tracker.icon_utils import icon_for as _icon_for
 
 
 @functools.lru_cache(maxsize=128)
